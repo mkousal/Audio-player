@@ -36,7 +36,8 @@ openBtn.String = 'Open file';
 openBtn.Position = [200 50 100 20];
 
 playNow = uicontrol(f, 'Style', 'text');
-playNow.Position = [0 100 400 20];
+playNow.Position = [0 100 400 40];
+playNow.FontSize = 14;
 
 % gainSlider = uicontrol(f, 'Style', 'slider');
 % gainSlider.Value = 1;
@@ -57,21 +58,31 @@ end
 function openTrack(hObject, eventdata, handles)         %callback function for opening new file and importing it into audioplayer
     f = hObject.Parent;
     global player;
+    global fileReader;
+    global deviceWriter;
     [fileToPlay, path] = uigetfile('Audio files (*.wav;*.ogg;*.flac;*.au;*.aiff;*.aifc;*.aif;*.aifc;*.mp3;*.m4a;*.mp4)', 'Open audio file');
     if fileToPlay ~= 0
-        [y, Fs] = audioread(strcat(path, fileToPlay), 'native');
-        player = audioplayer(y, Fs);
+%         [y, Fs] = audioread(strcat(path, fileToPlay)
+%         player = audioplayer(y, Fs);
+        fileReader = dsp.AudioFileReader(strcat(path, fileToPlay),'SamplesPerFrame', 256);
+        deviceWriter = audioDeviceWriter('SampleRate', fileReader.SampleRate);
         f.UserData.playNow.String = fileToPlay;
     end
 end
 
 function playTrack(hObject, eventdata, handles)
-    global player;
-    if ~isempty(player) && player.get.CurrentSample == 1
-        play(player);
-
-    elseif ~isempty(player)
-        resume(player);
+%     global player;
+%     if ~isempty(player) && player.get.CurrentSample == 1
+%         play(player);
+% 
+%     elseif ~isempty(player)
+%         resume(player);
+%     end
+    global fileReader;
+    global deviceWriter;
+    while ~isDone(fileReader)
+        signal = fileReader();
+        deviceWriter(signal);
     end
 end
 
